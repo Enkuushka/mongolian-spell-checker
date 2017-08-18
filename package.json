@@ -1,0 +1,16 @@
+{
+  "name": "mongolian-spell-checker",
+  "version": "1.0.0",
+  "description": "Монгол хэлний үг, үсгийн алдаа шалгагч",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mongolian",
+    "spell",
+    "checker"
+  ],
+  "author": "Enkuushka",
+  "license": "ISC"
+}
