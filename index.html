@@ -9,24 +9,46 @@
     <div class="container">
       <div class="row">
         <div class="col-lg-12">
-          <kbd>ctrl+alt+M</kbd> дарвал цонх нээгдэнэ.
-          <button id="closeBtn" class="btn btn-default">close</button>
-        </div>
-        <div class="col-lg-12">
-          <textarea id="inputTa" class="form-control"></textarea>
-        </div>
-        <div class="col-lg-12">
-          <button id="queryBtn" class="btn btn-default">Шалга</button>
-        </div>
-        <div class="col-lg-12">
-          <div class="card">
-            <div class="card-body">
-              <p id="resultParagraph"></p>
+            <div class="card card-default" style="margin-top: 20px;">
+                <h3 class="card-header">Монгол хэлний дүрмийн алдаа шалгагч</h3>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <textarea id="inputTa" class="form-control">хүм бүр байна</textarea>
+                        </div>
+                        <div class="col-lg-12" style="margin:10px 0;">
+                            <a href="#" id="queryBtn" class="btn btn-primary">Шалга <kbd>ctrl+ENTER</kbd></a>
+                        </div>
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <p id="resultParagraph">хүм бүр байна</p>    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <p>
+                        <kbd>ctrl+alt+M</kbd> дарвал цонх нээгдэнэ...
+                        <hr>
+                        <p class="pull-right">
+                            Алдаа шалгагчийн хаяг <a href="http://spellcheck.gov.mn/">http://spellcheck.gov.mn/</a>
+                        </p>
+                    </p>
+                </div>
             </div>
-          </div>
         </div>
+        <ul class="list-group">
+            <li type="button" class="list-group-item list-group-item-action">Cras justo odio</li>
+            <li type="button" class="list-group-item list-group-item-action">Dapibus ac facilisis in</li>
+            <li type="button" class="list-group-item list-group-item-action">Morbi leo risus</li>
+            <li type="button" class="list-group-item list-group-item-action">Porta ac consectetur ac</li>
+            <li type="button" class="list-group-item list-group-item-action">Vestibulum at eros</li>
+        </ul>
       </div>
     </div>
+    <script type="text/javascript" src="node_modules/jquery/dist/jquery.js"></script>
     <script type="text/javascript">
       window.$ = window.jQuery = require("jquery");
       apiUrl = "http://spellcheck.gov.mn/scripts/tiny_mce/plugins/spellchecker/rpc.php";
@@ -40,30 +62,67 @@
           $resultParagraph.html($inputTa.val());
         });
 
-        $("#queryBtn").on("click",function(e){
-          var words = $inputTa.val().replace("\n","").split(" ");
-          var queryWords = [];
-          words.forEach(function(w){
-            queryWords.push(escape(w).replace(/%/g,"\\"));
-          });
-          queryWords = queryWords.join(",");
-          queryWords.replace(/,/g, "\",\"");
-          $resultParagraph.html($inputTa.val());
-          $.ajax({
-            url: apiUrl,
-            type: "POST",
-            contentType : 'application/json',
-            data: '{"id":"c0","method":"checkWords","params":["mn",["'+queryWords+'"]]}'
-          }).done(function(data){
-            // хэдэн алда байга вэ хүмүсээ хэлж өгнө үү.
-            var jsonData = JSON.parse(data);
-            jsonData.result.forEach(function(errorWord){
-              console.log(errorWord);
-              console.log(new RegExp(errorWord, 'g'));
-              $resultParagraph.html($resultParagraph.html().replace(new RegExp(errorWord, 'g'), "<span class='bg-warning'>"+errorWord+"</span>"));
-            });
-          });
+        $(".list-group").hide();
+
+        $(document).on("click", function(e){
+            var $target = $(e.target);
+            if($target.hasClass('errWordBtn')) {
+                $.ajax({
+                    url: apiUrl,
+                    type: "POST",
+                    contentType : 'application/json',
+                    data: '{"id":"c0","method":"getSuggestions","params":["mn","'+escape($target.text()).replace(/%/g,"\\")+'"]}'
+                }).done(function(data){
+                    $(".list-group").html("");
+                    var jsonData = JSON.parse(data);
+                    jsonData.result.forEach(function(suggestedWord){
+                        $(".list-group").append('<li type="button" class="list-group-item list-group-item-action">'+suggestedWord+'</li>');
+                    });
+                    $(".list-group").show();
+                    $(".list-group").offset({
+                        top: $target.offset().top+$target.position().top,
+                        left: $target.offset().left
+                    });
+                });
+            } else {
+                $(".list-group").hide();
+            }
         });
+
+        $(document).on("keyup", function(e){
+            if(e.keyCode == 13 && e.ctrlKey) {
+                checkSpell();
+            }
+        });
+
+        $("#queryBtn").on("click",function(e){
+            checkSpell();
+        });
+
+        var checkSpell = function(){
+            $resultParagraph.html($inputTa.val());
+            var words = $inputTa.val().replace("\n","").split(" ");
+            var queryWords = [];
+            words.forEach(function(w){
+                queryWords.push(escape(w).replace(/%/g,"\\"));
+            });
+            queryWords = queryWords.join(",");
+            queryWords.replace(/,/g, "\",\"");
+            $.ajax({
+                url: apiUrl,
+                type: "POST",
+                contentType : 'application/json',
+                data: '{"id":"c0","method":"checkWords","params":["mn",["'+queryWords+'"]]}'
+            }).done(function(data){
+                // хэдэн алда байга вэ хүмүсээ хэлж өгнө үү.
+                var jsonData = JSON.parse(data);
+                jsonData.result.forEach(function(errorWord){
+                    console.log(errorWord);
+                    console.log(new RegExp(errorWord, 'g'));
+                    $resultParagraph.html($resultParagraph.html().replace(new RegExp(errorWord, 'g'), "<button class='errWordBtn btn btn-sm bg-warning'>"+errorWord+"</button>"));
+                });
+            });
+        };
       });
     </script>
   </body>

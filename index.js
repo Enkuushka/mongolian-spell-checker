@@ -66,6 +66,7 @@ app.on('ready', function () {
 	win.setMenuBarVisibility(false)
   	globalShortcut.register('CommandOrControl+Alt+M', function () {
     	win.focus();
+    	console.log(win);
   	})
 })
 
